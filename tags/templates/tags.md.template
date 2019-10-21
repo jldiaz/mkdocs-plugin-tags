@@ -1,8 +1,8 @@
 ---
-title: By Tag
+title: Tags
 ---
 
-# Grouped by tag
+# Contents grouped by tag
 
 {% for tag, pages in tags %}
 

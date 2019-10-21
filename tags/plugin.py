@@ -19,7 +19,7 @@ from mkdocs.utils import string_types
 class TagsPlugin(BasePlugin):
     """
     Creates "tags.md" file containing a list of the pages grouped by tags
-     
+
     It uses the info in the YAML metadata of each page, for the pages which
     provide a "tags" keyword (whose value is a list of strings)
     """
@@ -37,15 +37,8 @@ class TagsPlugin(BasePlugin):
         self.tags_template = None
 
     def on_nav(self, nav, config, files):
-        # leaves = []
-        # sections = []
-        # for e in nav:
-        #     if isinstance(e, Section):
-        #         sections.append(e)
-        #     else:
-        #         leaves.append(e)
-        # nav.items = leaves + sections
-        nav.items.insert(1, nav.items.pop(-1))
+        # nav.items.insert(1, nav.items.pop(-1))
+        pass
 
     def on_config(self, config):
         # Re assign the options
@@ -94,18 +87,20 @@ class TagsPlugin(BasePlugin):
         output_text = templ.render(
                 tags=sorted(data.items(), key=lambda t: t[0].lower()),
         )
-        return output_text        
+        return output_text
 
-    def generate_tags_file(self): 
-        con_tags = sorted(self.metadata, key=lambda e: e.get("year", 5000) if e else 0)
-        por_tag = defaultdict(list)
-        for e in con_tags:
+    def generate_tags_file(self):
+        sorted_meta = sorted(self.metadata, key=lambda e: e.get("year", 5000) if e else 0)
+        tag_dict = defaultdict(list)
+        for e in sorted_meta:
             if not e:
                 continue
+            if "title" not in e:
+                e["title"] = "Untitled"
             for tag in e.get("tags", []):
-                por_tag[tag].append(e)
+                tag_dict[tag].append(e)
 
-        t = self.generate_tags_page(por_tag)
+        t = self.generate_tags_page(tag_dict)
 
         with open(str(self.tags_folder / self.tags_filename), "w") as f:
             f.write(t)
@@ -126,7 +121,7 @@ def get_metadata(name, path):
             if c==1:
                 result.append(line)
         return "".join(result)
-        
+
     filename = Path(path) / Path(name)
     with filename.open() as f:
         metadata = extract_yaml(f)
