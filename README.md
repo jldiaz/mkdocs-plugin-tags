@@ -58,9 +58,9 @@ Visit the URL `/tags` (it should appear in the nav panel). This is an auto-gener
 
 # How it works
 
-On each build (even with `--livereload`), all the `.md` files composing the site are scanned, their "triple-dash-delimted" yaml header is extracted and parsed, and the list of tags is collected. 
+On each build (even with `--livereload`), all the `.md` files composing the site are scanned, their metadata collected, and their tags processed.
 
-After that, a new temporal file is created (by default in `aux/tags.md`, but this is customizable) which contains the generated tags page, in markdown format. This file is not in the documents folder to avoid retriggering a build, but it is added to the list of files to be converted to HTML by mkdocs.
+After that, a new temporal file is created (by default in `aux/tags.md`, but this is customizable) which contains the generated tags page, in markdown format, and a new build is run if the file changed. The file is not in the documents folder, but it is added to the list of files to be converted to HTML by mkdocs, to make it appear in nav and to have it properly styled according to the theme in use.
 
 # Customization
 
@@ -103,7 +103,4 @@ plugins:
 
 # TODO
 
-* Remove the requirement of having a `title:` metadata in the YAML header (take the title of the page from other place if absent)
-* Allow for yaml metadata which is not "triple-dash" delimited.
-* Better integration with themes (tested with Material, looks good)
 * Make visible the tags in each page? Currently they are "invisible metadata". The author can provide a jinja2 custom "main" template which renders them from `page.meta.tags`, but perhaps it could be useful that the plugin rewrites the markdown of each page (on page load), to add this metadata as part of the "visible" markdown.

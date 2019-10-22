@@ -6,15 +6,15 @@
 # --------------------------------------------
 from collections  import defaultdict
 from pathlib import Path
-import os
-import yaml
+import logging
 import jinja2
-from mkdocs.structure.files import File
-from mkdocs.structure.nav import Section
 from mkdocs.plugins import BasePlugin
 from mkdocs.config.config_options import Type
 from mkdocs.utils import string_types
+from mkdocs.structure.files import File
+from mkdocs.commands.build import build
 
+hash_previous = None
 
 class TagsPlugin(BasePlugin):
     """
@@ -36,12 +36,8 @@ class TagsPlugin(BasePlugin):
         self.tags_folder = "aux"
         self.tags_template = None
 
-    def on_nav(self, nav, config, files):
-        # nav.items.insert(1, nav.items.pop(-1))
-        pass
-
     def on_config(self, config):
-        # Re assign the options
+        # Re assign the options from configuration
         self.tags_filename = Path(self.config.get("tags_filename") or self.tags_filename)
         self.tags_folder = Path(self.config.get("tags_folder") or self.tags_folder)
         # Make sure that the tags folder is absolute, and exists
@@ -49,30 +45,69 @@ class TagsPlugin(BasePlugin):
             self.tags_folder = Path(config["docs_dir"]) / ".." / self.tags_folder
         if not self.tags_folder.exists():
             self.tags_folder.mkdir(parents=True)
-
         if self.config.get("tags_template"):
             self.tags_template = Path(self.config.get("tags_template"))
 
     def on_files(self, files, config):
-        # Scan the list of files to extract tags from meta
-        for f in files:
-            if not f.src_path.endswith(".md"):
+        # Add tags.md to the list of files, if tag.md exists
+        # Also update hash_previous with the hash of the contents of tags.md
+        global hash_previous
+        self.metadata = []
+        tagsfile = self.tags_folder / self.tags_filename
+        if tagsfile.exists():
+            newfile = File(
+                path=str(self.tags_filename),
+                src_dir=str(self.tags_folder),
+                dest_dir=config["site_dir"],
+                use_directory_urls=False
+            )
+            files.append(newfile)
+            # Also compute and store its hash
+            with tagsfile.open() as f:
+                hash_previous = hash(f.read())
+
+    def on_page_markdown(self, markdown, page, config, files):
+        # Collect page metadata
+        if page.meta:
+            meta = page.meta.copy()
+            if "title" not in meta:
+                meta.update(title=page.title)
+            if "year" not in meta:
+                meta.update(year=0)
+            self.metadata.append(meta)
+
+    def on_post_build(self, config):
+        # Create tags.md file and trigger a new build if required
+        global hash_previous
+        content = self.generate_tags_file()
+        if hash(content) != hash_previous:
+            hash_previous = hash(content)
+            build(config)
+        else:
+            # print("INFO: Rebuild is not neccessary")
+            pass
+
+    # Helper functions
+    def generate_tags_file(self):
+        # Groups pages by tags, creates tags.md file
+        sorted_meta = sorted(self.metadata, key=lambda e: e.get("year", 5000) if e else 0)
+        tag_dict = defaultdict(list)
+        for e in sorted_meta:
+            if not e:
                 continue
-            self.metadata.append(get_metadata(f.src_path, config["docs_dir"]))
+            if "title" not in e:
+                e["title"] = "Untitled"
+            for tag in e.get("tags", []):
+                tag_dict[tag].append(e)
 
-        # Create new file with tags
-        self.generate_tags_file()
+        t = self.generate_tags_page_contents(tag_dict)
 
-        # New file to add to the build
-        newfile = File(
-            path=str(self.tags_filename),
-            src_dir=str(self.tags_folder),
-            dest_dir=config["site_dir"],
-            use_directory_urls=False
-        )
-        files.append(newfile)
+        with open(str(self.tags_folder / self.tags_filename), "w") as f:
+            f.write(t)
+        return t
 
-    def generate_tags_page(self, data):
+    def generate_tags_page_contents(self, data):
+        # Returns the markddown to write into tags.md
         if self.tags_template is None:
             templ_path = Path(__file__).parent  / Path("templates")
             environment = jinja2.Environment(
@@ -88,44 +123,3 @@ class TagsPlugin(BasePlugin):
                 tags=sorted(data.items(), key=lambda t: t[0].lower()),
         )
         return output_text
-
-    def generate_tags_file(self):
-        sorted_meta = sorted(self.metadata, key=lambda e: e.get("year", 5000) if e else 0)
-        tag_dict = defaultdict(list)
-        for e in sorted_meta:
-            if not e:
-                continue
-            if "title" not in e:
-                e["title"] = "Untitled"
-            for tag in e.get("tags", []):
-                tag_dict[tag].append(e)
-
-        t = self.generate_tags_page(tag_dict)
-
-        with open(str(self.tags_folder / self.tags_filename), "w") as f:
-            f.write(t)
-
-# Helper functions
-
-def get_metadata(name, path):
-    # Extract metadata from the yaml at the beginning of the file
-    def extract_yaml(f):
-        result = []
-        c = 0
-        for line in f:
-            if line.strip() == "---":
-                c +=1
-                continue
-            if c==2:
-                break
-            if c==1:
-                result.append(line)
-        return "".join(result)
-
-    filename = Path(path) / Path(name)
-    with filename.open() as f:
-        metadata = extract_yaml(f)
-        if metadata:
-            meta = yaml.load(metadata, Loader=yaml.FullLoader)
-            meta.update(filename=name)
-            return meta
