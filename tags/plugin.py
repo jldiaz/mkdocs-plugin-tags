@@ -70,10 +70,9 @@ class TagsPlugin(BasePlugin):
         # Collect page metadata
         if page.meta:
             meta = page.meta.copy()
+            meta.update(filename=page.url)
             if "title" not in meta:
                 meta.update(title=page.title)
-            if "year" not in meta:
-                meta.update(year=0)
             self.metadata.append(meta)
 
     def on_post_build(self, config):
@@ -90,9 +89,8 @@ class TagsPlugin(BasePlugin):
     # Helper functions
     def generate_tags_file(self):
         # Groups pages by tags, creates tags.md file
-        sorted_meta = sorted(self.metadata, key=lambda e: e.get("year", 5000) if e else 0)
         tag_dict = defaultdict(list)
-        for e in sorted_meta:
+        for e in self.metadata:
             if not e:
                 continue
             if "title" not in e:
