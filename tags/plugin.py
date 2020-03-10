@@ -13,7 +13,6 @@ from mkdocs.structure.files import File
 from mkdocs.structure.nav import Section
 from mkdocs.plugins import BasePlugin
 from mkdocs.config.config_options import Type
-from mkdocs.utils import string_types
 
 
 class TagsPlugin(BasePlugin):
@@ -25,9 +24,9 @@ class TagsPlugin(BasePlugin):
     """
 
     config_scheme = (
-        ('tags_filename', Type(string_types, default='tags.md')),
-        ('tags_folder', Type(string_types, default='aux')),
-        ('tags_template', Type(string_types)),
+        ('tags_filename', Type(str, default='tags.md')),
+        ('tags_folder', Type(str, default='aux')),
+        ('tags_template', Type(str)),
     )
 
     def __init__(self):
@@ -97,8 +96,10 @@ class TagsPlugin(BasePlugin):
                 continue
             if "title" not in e:
                 e["title"] = "Untitled"
-            for tag in e.get("tags", []):
-                tag_dict[tag].append(e)
+            tags = e.get("tags", [])
+            if tags is not None:
+                for tag in tags:
+                    tag_dict[tag].append(e)
 
         t = self.generate_tags_page(tag_dict)
 
