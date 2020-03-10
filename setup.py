@@ -15,7 +15,7 @@ def read_file(fname):
 
 setup(
     name='tags-macros-plugin',
-    version='0.2.0',
+    version='0.3.0',
     description="Processes tags in yaml metadata",
     long_description=read_file('README.md'),
     long_description_content_type='text/markdown',
@@ -26,7 +26,7 @@ setup(
     license='MIT',
     python_requires='>=3.6',
     install_requires=[
-        'mkdocs>=0.17',
+        'mkdocs>=1.1',
         'jinja2',
     ],
     classifiers=[
