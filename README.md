@@ -103,7 +103,5 @@ plugins:
 
 # TODO
 
-* Remove the requirement of having a `title:` metadata in the YAML header (take the title of the page from other place if absent)
-* Allow for yaml metadata which is not "triple-dash" delimited.
 * Better integration with themes (tested with Material, looks good)
-* Make visible the tags in each page? Currently they are "invisible metadata". The author can provide a jinja2 custom "main" template which renders them from `page.meta.tags`, but perhaps it could be useful that the plugin rewrites the markdown of each page (on page load), to add this metadata as part of the "visible" markdown.
+* Make visible the tags in each page? Currently, they are "invisible metadata". The author can provide a jinja2 custom "main" template which renders them from `page.meta.tags`, but perhaps it could be useful that the plugin rewrites the markdown of each page (on page load), to add this metadata as part of the "visible" markdown.
