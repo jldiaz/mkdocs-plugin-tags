@@ -14,6 +14,11 @@ $ pip install git+https://github.com/jldiaz/mkdocs-plugin-tags.git
 
 > **Note**. Since this package is in alpha stage, it is not yet available from pypi, so the only way to install it is via git.
 
+> **Additional note**. If you are using `pipenv` you must use the following syntax:
+> ```shell
+> $ pipenv install git+https://github.com/jldiaz/mkdocs-plugin-tags.git#egg=tags-macros-plugin
+> ```
+
 Create a new documentation folder:
 
 ```shell
